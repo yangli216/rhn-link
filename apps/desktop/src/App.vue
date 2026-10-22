@@ -5,6 +5,14 @@ import { open, save } from '@tauri-apps/plugin-dialog'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { cloneConfig, configFingerprint } from './config-draft.js'
 import LocalMappingStudio from './LocalMappingStudio.vue'
+import OnboardingWizard from './OnboardingWizard.vue'
+import {
+  applyOnboardingDraft,
+  isOnboardingProjectReady,
+  saveOnboardingPreference,
+  type OnboardingDraft,
+  type OnboardingRole,
+} from './onboarding.js'
 import {
   initialRuntimeStatusHealth,
   updateRuntimeStatusHealth,
@@ -475,6 +483,8 @@ const runtimeStatusRecovered = ref(false)
 const mappingDraftDirty = ref(false)
 const mappingWorkspaceUnverified = ref(false)
 const mappingWorkspaceRevision = ref(0)
+const onboardingOpen = ref(false)
+const onboardingDismissed = ref(false)
 type ConsoleSection = 'overview' | 'configuration' | 'native' | 'plugins' | 'delivery' | 'security'
 const activeSection = ref<ConsoleSection>('overview')
 const runtimeStatusStale = computed(() => runtimeStatusHealth.value.stale)
@@ -489,6 +499,21 @@ const controlStateUnverified = computed(() => (
 ))
 const projectStateUnverified = computed(() => (
   controlStateUnverified.value || mappingWorkspaceUnverified.value
+))
+const onboardingConfigured = computed(() => isOnboardingProjectReady(snapshot.value?.config))
+const onboardingInitialEnvironmentName = computed(() => {
+  const config = snapshot.value?.config
+  if (!config) return ''
+  return config.environments.find((environment) => environment.url === config.website)?.name
+    ?? config.environments[0]?.name
+    ?? ''
+})
+const onboardingCanOpenBusiness = computed(() => (
+  onboardingConfigured.value
+  && !busy.value
+  && !controlStateUnverified.value
+  && !configDraftDirty.value
+  && !managedProcessRestartRequired.value
 ))
 const managedProcessRestartRequired = computed(() => (
   status.value?.managedProcessRestartRequired ?? false
@@ -793,6 +818,63 @@ function applyConfigSnapshot(next: ConfigSnapshot) {
   savedManagedProcesses.value = [...next.config.managedProcesses]
 }
 
+function maybeOfferOnboarding(config: DesktopConfig) {
+  if (!onboardingDismissed.value && !isOnboardingProjectReady(config)) onboardingOpen.value = true
+}
+
+function openOnboarding() {
+  error.value = ''
+  notice.value = ''
+  onboardingDismissed.value = false
+  onboardingOpen.value = true
+}
+
+function closeOnboarding() {
+  onboardingDismissed.value = true
+  onboardingOpen.value = false
+}
+
+function rememberOnboardingRole(role: OnboardingRole) {
+  saveOnboardingPreference(window.localStorage, role)
+}
+
+async function saveOnboardingConfig(draft: OnboardingDraft, role: OnboardingRole) {
+  if (!snapshot.value) return
+  rememberOnboardingRole(role)
+  snapshot.value.config = applyOnboardingDraft(snapshot.value.config, draft)
+  const saved = await saveConfig()
+  if (!saved) return
+  onboardingDismissed.value = true
+  onboardingOpen.value = false
+  if (role === 'developer') {
+    activeSection.value = 'native'
+    notice.value = '基础项目配置已保存。接下来可创建本地映射、发现组件并生成 Web 接入代码。'
+  } else {
+    activeSection.value = 'delivery'
+    notice.value = '基础项目配置已保存。请继续完成项目包、来源策略和目标机自检。'
+  }
+}
+
+async function importOnboardingProject(role: OnboardingRole) {
+  rememberOnboardingRole(role)
+  closeOnboarding()
+  activeSection.value = 'delivery'
+  await inspectProjectBundle()
+}
+
+async function openOnboardingBusiness(role: OnboardingRole) {
+  rememberOnboardingRole(role)
+  closeOnboarding()
+  activeSection.value = 'overview'
+  await openBusiness()
+}
+
+function navigateOnboarding(section: 'overview' | 'native' | 'delivery', role: OnboardingRole) {
+  rememberOnboardingRole(role)
+  closeOnboarding()
+  activeSection.value = section
+}
+
 function requireSavedConfig(action: string): boolean {
   if (!configDraftDirty.value) return true
   notice.value = ''
@@ -925,6 +1007,7 @@ async function loadControlConsole() {
     if (!controlConsoleMounted) return
     status.value = bridge
     applyConfigSnapshot(config)
+    maybeOfferOnboarding(config.config)
     inventory.value = plugins
     deploymentCheck.value = deployment
     if (deployment) deploymentCheckUnavailable.value = false
@@ -1100,13 +1183,13 @@ async function discardConfigChanges() {
   }
 }
 
-async function saveConfig() {
-  if (!snapshot.value) return
+async function saveConfig(): Promise<boolean> {
+  if (!snapshot.value) return false
   if (shortcutConfigError.value) {
     notice.value = ''
     error.value = shortcutConfigError.value
     activeSection.value = 'configuration'
-    return
+    return false
   }
   const candidate = cloneConfig(snapshot.value.config)
   let closedSurfaces: BusinessSurfaceCloseResult | undefined
@@ -1123,6 +1206,7 @@ async function saveConfig() {
   if (outcome.succeeded && closedSurfaces) {
     showPrimaryActionSuccess(`配置已安全保存；${businessSurfaceCloseSummary(closedSurfaces)}`, outcome.refreshed)
   }
+  return outcome.succeeded
 }
 
 async function importConfig() {
@@ -1682,10 +1766,28 @@ async function exportDeploymentCheck() {
 
 <template>
   <div class="app-shell">
+    <OnboardingWizard
+      :open="onboardingOpen"
+      :busy="busy || controlLoadActive || controlRefreshActive"
+      :configured="onboardingConfigured"
+      :can-open-business="onboardingCanOpenBusiness"
+      :load-failed="controlLoadFailed"
+      :initial-project-name="snapshot?.config.projectName ?? ''"
+      :initial-project-id="snapshot?.config.projectId ?? ''"
+      :initial-business-url="snapshot?.config.website ?? ''"
+      :initial-environment-name="onboardingInitialEnvironmentName"
+      :initial-tenant-id="snapshot?.config.tenantId ?? ''"
+      :action-error="error"
+      @close="closeOnboarding"
+      @save="saveOnboardingConfig"
+      @import-project="importOnboardingProject"
+      @open-business="openOnboardingBusiness"
+      @navigate="navigateOnboarding"
+    />
     <aside class="sidebar">
       <div class="brand">
-        <span class="brand-mark">S</span>
-        <span><strong>SSDEV</strong><small>Desktop Next</small></span>
+        <span class="brand-mark">R</span>
+        <span><strong>RHN LINK</strong><small>健域端联</small></span>
       </div>
       <nav aria-label="控制台导航">
         <button
@@ -1701,6 +1803,9 @@ async function exportDeploymentCheck() {
           <i v-if="section.id === 'plugins' && inventory?.quarantined.length" class="nav-alert">{{ inventory.quarantined.length }}</i>
         </button>
       </nav>
+      <button class="sidebar-guide" type="button" @click="openOnboarding">
+        <span>?</span><strong>使用向导</strong><small>按角色快速开始</small>
+      </button>
       <div class="sidebar-status">
         <span :class="['status-dot', { ready: Boolean(status) && !controlLoadFailed && !controlRefreshIncomplete && !runtimeStatusStale && !mappingWorkspaceUnverified && !managedProcessRestartRequired, warning: Boolean(controlLoadFailed || controlRefreshIncomplete || error || ssoError || runtimeStatusStale || mappingWorkspaceUnverified || managedProcessRestartRequired) }]" />
         <span><strong>{{ controlLoadFailed ? '控制台初始化失败' : runtimeStatusStale ? '桌面通信中断' : controlRefreshIncomplete ? '操作已完成，状态待刷新' : mappingWorkspaceUnverified ? '映射清单待复核' : managedProcessRestartRequired ? '受控进程等待重启' : error || ssoError ? '需要处理' : status ? '桌面服务正常' : '正在连接' }}</strong><small>{{ controlLoadFailed ? '请重新加载核心项目状态' : runtimeStatusStale ? `状态连续 ${runtimeStatusHealth.consecutiveFailures} 次刷新失败` : controlRefreshIncomplete ? `${controlRefreshMissing.length} 类状态等待重新读取` : mappingWorkspaceUnverified ? '请在原生映射页重新读取当前清单' : managedProcessRestartRequired ? '退出并重新启动客户端后继续' : `${status?.serviceCount ?? '—'} 个原生服务可用` }}</small></span>
