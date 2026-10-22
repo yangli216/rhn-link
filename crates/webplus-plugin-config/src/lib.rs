@@ -49,12 +49,12 @@ pub fn generate_typescript_client(
         .any(|plan| !plan.method.tracked_invocation_required);
     let mut output = String::from(
         "// Generated from an SSDEV plugin manifest. Regenerate after API changes.\n\
-import { parseTrackedInvocationStatus } from '@bsoft/ssdev-web-bridge'\n",
+import { parseTrackedInvocationStatus } from '@rhn/link-web-bridge'\n",
     );
     output.push_str(if has_ordinary_methods {
-        "import type { InvokeResponse, JsonObject, JsonValue, PluginInvoker, PluginOperationId, TrackedInvocationBridge, TrackedInvocationStatus } from '@bsoft/ssdev-web-bridge'\n\n"
+        "import type { InvokeResponse, JsonObject, JsonValue, PluginInvoker, PluginOperationId, TrackedInvocationBridge, TrackedInvocationStatus } from '@rhn/link-web-bridge'\n\n"
     } else {
-        "import type { JsonObject, JsonValue, PluginOperationId, TrackedInvocationBridge, TrackedInvocationStatus } from '@bsoft/ssdev-web-bridge'\n\n"
+        "import type { JsonObject, JsonValue, PluginOperationId, TrackedInvocationBridge, TrackedInvocationStatus } from '@rhn/link-web-bridge'\n\n"
     });
     for plan in &methods {
         output.push_str(&format!(

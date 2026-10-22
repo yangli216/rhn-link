@@ -1,0 +1,36 @@
+[
+  {
+    "serviceId": "rhn.printing",
+    "mainClass": "bin/rhn_printing_plugin.dll",
+    "mainType": "dll",
+    "architecture": "x64",
+    "charset": "utf8",
+    "callingConvention": "cdecl",
+    "cacheable": true,
+    "timeout": 120000,
+    "deps": [],
+    "methods": [
+      {
+        "name": "RhnListPrinters",
+        "alias": "listPrinters",
+        "returnType": "int",
+        "timeout": 15000,
+        "parameters": [{ "name": "$result", "type": "string", "len": 65536 }]
+      },
+      {
+        "name": "RhnPrintPdf",
+        "alias": "printPdf",
+        "returnType": "int",
+        "trackedInvocationRequired": true,
+        "parameters": [
+          { "name": "printerName", "type": "string" },
+          { "name": "documentBase64", "type": "string" },
+          { "name": "sha256", "type": "string" },
+          { "name": "copies", "type": "int" },
+          { "name": "jobName", "type": "string" },
+          { "name": "$result", "type": "string", "len": 1024 }
+        ]
+      }
+    ]
+  }
+]

@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const script = join(repositoryRoot, 'scripts', 'web-bridge-package.mjs')
 const consumerScript = join(repositoryRoot, 'scripts', 'web-integration-consumer.mjs')
-const artifactManifestName = 'ssdev-web-bridge-sdk.json'
+const artifactManifestName = 'rhn-link-web-bridge-sdk.json'
 const workflow = join(repositoryRoot, '.github', 'workflows', 'ci.yml')
 
 function run(...arguments_) {
@@ -147,7 +147,7 @@ function runConsumerSet(kits, sdkDirectory) {
 }
 
 test('builds and verifies a reproducible bounded Web Bridge SDK artifact', async (context) => {
-  const root = await mkdtemp(join(tmpdir(), 'ssdev-web-bridge-package-'))
+  const root = await mkdtemp(join(tmpdir(), 'rhn-link-web-bridge-package-'))
   context.after(() => rm(root, { recursive: true, force: true }))
   const first = join(root, 'first')
   const second = join(root, 'second')
@@ -160,8 +160,8 @@ test('builds and verifies a reproducible bounded Web Bridge SDK artifact', async
   const firstManifest = JSON.parse(await readFile(join(first, artifactManifestName), 'utf8'))
   const secondManifest = JSON.parse(await readFile(join(second, artifactManifestName), 'utf8'))
   assert.deepEqual(firstManifest, secondManifest)
-  assert.equal(firstManifest.packageName, '@bsoft/ssdev-web-bridge')
-  assert.equal(firstManifest.packageVersion, '0.1.0')
+  assert.equal(firstManifest.packageName, '@rhn/link-web-bridge')
+  assert.equal(firstManifest.packageVersion, '0.2.0')
   assert.equal(firstManifest.sourceFileCount, 6)
   assert.equal(firstManifest.consumerSmokeVerified, true)
   assert.match(firstManifest.sha256, /^[0-9a-f]{64}$/)
@@ -182,8 +182,8 @@ test('builds and verifies a reproducible bounded Web Bridge SDK artifact', async
   const consumerReport = JSON.parse(consumed.stdout)
   assert.equal(consumerReport.pluginId, 'reader-plugin')
   assert.equal(consumerReport.pluginVersion, '2.3.1')
-  assert.equal(consumerReport.sdkPackageName, '@bsoft/ssdev-web-bridge')
-  assert.equal(consumerReport.sdkPackageVersion, '0.1.0')
+  assert.equal(consumerReport.sdkPackageName, '@rhn/link-web-bridge')
+  assert.equal(consumerReport.sdkPackageVersion, '0.2.0')
   assert.equal(consumerReport.ordinaryMethodCount, 1)
   assert.equal(consumerReport.sdkArchiveSha256, firstManifest.sha256)
   assert.equal(consumerReport.offlineInstallVerified, true)
@@ -251,7 +251,7 @@ test('builds and verifies a reproducible bounded Web Bridge SDK artifact', async
   const kitClientPath = join(kit, 'client.ts')
   const kitManifestPath = join(kit, 'ssdev-web-kit.json')
   const kitClient = await readFile(kitClientPath, 'utf8')
-  const incompatibleClient = `${kitClient}\nexport type MissingSdkContract = import('@bsoft/ssdev-web-bridge').DefinitelyMissingSdkType\n`
+  const incompatibleClient = `${kitClient}\nexport type MissingSdkContract = import('@rhn/link-web-bridge').DefinitelyMissingSdkType\n`
   await writeFile(kitClientPath, incompatibleClient)
   const kitManifest = JSON.parse(await readFile(kitManifestPath, 'utf8'))
   kitManifest.files.client.sha256 = sha256(incompatibleClient)
@@ -296,7 +296,7 @@ test('default CI uploads only a successfully verified platform-neutral SDK hando
   const build = document.indexOf('node scripts/web-bridge-package.mjs build')
   const verify = document.indexOf('node scripts/web-bridge-package.mjs verify')
   const toolingTests = document.indexOf('run: node --test scripts/test/*.test.mjs')
-  const upload = document.indexOf('name: ssdev-web-bridge-sdk')
+  const upload = document.indexOf('name: rhn-link-web-bridge-sdk')
 
   assert.ok(build >= 0)
   assert.ok(verify > build)

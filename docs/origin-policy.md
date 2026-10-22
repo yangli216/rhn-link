@@ -18,6 +18,15 @@
           "methods": ["print"]
         }
       ]
+    },
+    {
+      "origin": "https://rhn.example.internal",
+      "services": [
+        {
+          "serviceId": "rhn.printing",
+          "methods": ["listPrinters", "printPdf"]
+        }
+      ]
     }
   ],
   "allowConfiguredBusinessOrigins": false,

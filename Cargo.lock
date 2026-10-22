@@ -3802,6 +3802,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rhn-printing-plugin"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "serde_json",
+ "sha2",
+ "webplus-plugin-config",
+ "windows 0.62.2",
+ "windows-future 0.3.2",
+]
+
+[[package]]
 name = "ring"
 version = "0.17.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -2,6 +2,8 @@
 
 SSO 是独立于业务 WebView 导航权限的敏感网络流程。即使发布方为旧业务站点签署了 `allowInsecureHttp` 例外，客户端也不会通过 HTTP 发送登录标识、租户、角色或科室信息。
 
+只有启动参数包含 `--uid` 时才会发起 SSO；不需要启动器 SSO 的部署（例如在页面内用 Cookie 登录的 RHN）不传这些参数即可，见 [RHN 部署说明](rhn-deployment.md)。
+
 ## 传输约束
 
 - SSO POST 端点固定从当前主业务地址派生为 `logon/ssoLogin`，且必须是无凭据、无片段的 HTTPS URL；

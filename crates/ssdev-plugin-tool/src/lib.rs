@@ -714,7 +714,7 @@ fn scaffold_readme(
         PluginArchitecture::X64 => "x64",
     };
     format!(
-        "# {display_name}\n\nSSDEV DLL 插件脚手架。插件 ID：`{plugin_id}`；服务：`{service_id}`；架构：`{architecture}`。\n\n## 1. 构建 DLL\n\n在 Windows PowerShell 中运行：\n\n```powershell\n./build.ps1\n```\n\n脚本使用锁定依赖构建 `native` crate，并把 `{native_library}` 复制到 `release-source/bin`。修改导出函数后必须同步评审 `release-source/api.json`。\n\n## 2. 检查和本地调试\n\n先运行 `ssdev-plugin-tool source-check --source release-source --plugin-id {plugin_id}`。该命令不加载 DLL、不执行方法，也不需要签名密钥；它会用正式准备流程的同一规则检查文件边界、PE 位数、声明导出和 ABI。随后在 SSDEV Desktop 的“原生映射”工作台中选择 `release-source/bin/{native_library}`，按照 `release-source/api.json` 配置 `SsdevEcho`，然后使用输入 `SSDEV_TEST` 调用 `echo`。不要把生产账号、患者数据或不可逆设备操作放入调试用例。\n\n## 3. Web 接入\n\n`web/client.ts` 由共享清单生成器产生，依赖 `@bsoft/ssdev-web-bridge`。业务代码创建桌面连接后，把 `connection.bridge` 传给生成的客户端；`api.json` 变化后重新运行 `ssdev-plugin-tool client`，输出到一个新的临时文件，评审差异后替换业务制品。正式矩阵完成脱敏和实机复核后，使用 `ssdev-plugin-tool web-kit --plugin-dir <规范插件目录> --matrix <定稿矩阵> --destination <新目录>` 原子生成客户端、fixture 和摘要清单，再把整个接入包交给业务项目；业务 CI 使用 `ssdev-plugin-tool web-kit-check --kit <接入包目录>` 拒绝文件集或摘要漂移。\n\n## 4. 签名发布\n\n先运行 `ssdev-plugin-tool prepare --source release-source ... --matrix-seed matrix-seed.json`。矩阵种子保持 `draft: true` 和 `reviewRequired: true`；必须在 Windows 测试环境核对完整响应后才可解除这两项门禁。随后由组织 KMS/HSM 签名，并使用 `finalize` 生成 `.ssdev-plugin`。私钥、真实硬件数据和业务 Web 源码都不能放入 `release-source`。\n\n此模板只覆盖 UTF-8 字符串输入和 1 KiB 调用方输出缓冲区。结构体、回调、浮点 ABI、厂商内存释放或线程绑定组件需要单独设计 Rust 适配器，不能通过修改 JSON 猜测。\n"
+        "# {display_name}\n\nSSDEV DLL 插件脚手架。插件 ID：`{plugin_id}`；服务：`{service_id}`；架构：`{architecture}`。\n\n## 1. 构建 DLL\n\n在 Windows PowerShell 中运行：\n\n```powershell\n./build.ps1\n```\n\n脚本使用锁定依赖构建 `native` crate，并把 `{native_library}` 复制到 `release-source/bin`。修改导出函数后必须同步评审 `release-source/api.json`。\n\n## 2. 检查和本地调试\n\n先运行 `ssdev-plugin-tool source-check --source release-source --plugin-id {plugin_id}`。该命令不加载 DLL、不执行方法，也不需要签名密钥；它会用正式准备流程的同一规则检查文件边界、PE 位数、声明导出和 ABI。随后在 SSDEV Desktop 的“原生映射”工作台中选择 `release-source/bin/{native_library}`，按照 `release-source/api.json` 配置 `SsdevEcho`，然后使用输入 `SSDEV_TEST` 调用 `echo`。不要把生产账号、患者数据或不可逆设备操作放入调试用例。\n\n## 3. Web 接入\n\n`web/client.ts` 由共享清单生成器产生，依赖 `@rhn/link-web-bridge`。业务代码创建桌面连接后，把 `connection.bridge` 传给生成的客户端；`api.json` 变化后重新运行 `ssdev-plugin-tool client`，输出到一个新的临时文件，评审差异后替换业务制品。正式矩阵完成脱敏和实机复核后，使用 `ssdev-plugin-tool web-kit --plugin-dir <规范插件目录> --matrix <定稿矩阵> --destination <新目录>` 原子生成客户端、fixture 和摘要清单，再把整个接入包交给业务项目；业务 CI 使用 `ssdev-plugin-tool web-kit-check --kit <接入包目录>` 拒绝文件集或摘要漂移。\n\n## 4. 签名发布\n\n先运行 `ssdev-plugin-tool prepare --source release-source ... --matrix-seed matrix-seed.json`。矩阵种子保持 `draft: true` 和 `reviewRequired: true`；必须在 Windows 测试环境核对完整响应后才可解除这两项门禁。随后由组织 KMS/HSM 签名，并使用 `finalize` 生成 `.ssdev-plugin`。私钥、真实硬件数据和业务 Web 源码都不能放入 `release-source`。\n\n此模板只覆盖 UTF-8 字符串输入和 1 KiB 调用方输出缓冲区。结构体、回调、浮点 ABI、厂商内存释放或线程绑定组件需要单独设计 Rust 适配器，不能通过修改 JSON 猜测。\n"
     )
 }
 
@@ -1065,7 +1065,7 @@ pub fn generate_web_fixtures(
         "// Generated from a structurally valid SSDEV executable matrix.\n\
 // Matrix SHA-256: {matrix_sha256}\n\
 // This does not prove hardware approval. Review exact data before committing.\n\
-import type {{ PluginInvocationFixture }} from '@bsoft/ssdev-web-bridge'\n\n\
+import type {{ PluginInvocationFixture }} from '@rhn/link-web-bridge'\n\n\
 export const pluginFixtures = {fixtures_json} satisfies readonly PluginInvocationFixture[]\n"
     );
     write_new_bytes(&output, source.as_bytes())?;

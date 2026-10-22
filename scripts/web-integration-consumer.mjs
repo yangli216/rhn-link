@@ -17,7 +17,7 @@ import { verifyArtifactDirectory } from './web-bridge-package.mjs'
 const kitManifestName = 'ssdev-web-kit.json'
 const kitClientName = 'client.ts'
 const kitFixturesName = 'fixtures.ts'
-const expectedSdkPackage = '@bsoft/ssdev-web-bridge'
+const expectedSdkPackage = '@rhn/link-web-bridge'
 const maxKitManifestBytes = 64 * 1024
 const maxKitTypescriptBytes = 4 * 1024 * 1024
 const maxCombinedTypescriptBytes = 32 * 1024 * 1024
@@ -352,7 +352,7 @@ async function verifyConsumers(options) {
   createPluginFixtureInvoker,
   parsePluginOperationId,
   settleTrackedInvocation,
-} from '@bsoft/ssdev-web-bridge'
+} from '@rhn/link-web-bridge'
 
 ${runtimeImports}
 

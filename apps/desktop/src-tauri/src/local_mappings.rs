@@ -2288,7 +2288,7 @@ mod tests {
         );
         definition.services[0].methods[0].props = vec!["Count".into()];
         let source = generate_typescript(&definition).unwrap();
-        assert!(source.contains("from '@bsoft/ssdev-web-bridge'"));
+        assert!(source.contains("from '@rhn/link-web-bridge'"));
         assert!(source.contains("PluginInvoker"));
         assert!(source.contains("PluginOperationId"));
         assert!(source.contains("TrackedInvocationBridge"));

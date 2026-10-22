@@ -30,6 +30,7 @@ try {
       -p ssdev-plugin-tool `
       -p ssdev-desktop-doctor `
       -p ssdev-windows-system-example `
+      -p rhn-printing-plugin `
       -p webplus-protocol `
       --all-targets `
       --target $target `
@@ -38,6 +39,7 @@ try {
     cargo build --locked --release -p webplus-plugin-host --target $target
     cargo build --locked -p webplus-native-fixture --target $target
     cargo build --locked -p ssdev-windows-system-example --target $target
+    cargo build --locked -p rhn-printing-plugin --target $target
 
     $fixture = Join-Path $workspace "target/$target/debug/webplus_native_fixture.dll"
     cargo run --locked -p webplus-native --example dll_roundtrip --target $target -- $fixture
@@ -49,6 +51,13 @@ try {
       Join-Path $workspace "examples/windows-system-plugin/api.x64.json"
     }
     cargo run --locked -p webplus-native --example windows_system_roundtrip --target $target -- $systemExample $systemApi
+    $printingPlugin = Join-Path $workspace "target/$target/debug/rhn_printing_plugin.dll"
+    $printingApi = if ($target -eq "i686-pc-windows-msvc") {
+      Join-Path $workspace "plugins/rhn-printing/api.x86.json"
+    } else {
+      Join-Path $workspace "plugins/rhn-printing/api.x64.json"
+    }
+    cargo run --locked -p webplus-native --example rhn_printing_roundtrip --target $target -- $printingPlugin $printingApi
 
     $pluginHostPath = Join-Path $workspace "target/$target/release/webplus-plugin-host.exe"
     cargo run --locked -p webplus-controller --example host_roundtrip --target $target -- $pluginHostPath $fixture

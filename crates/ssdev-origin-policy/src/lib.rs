@@ -794,4 +794,27 @@ mod tests {
         symlink(&target, &link).unwrap();
         assert!(read_limited(&link).is_err());
     }
+
+    #[test]
+    fn documented_example_grants_rhn_printing_exactly() {
+        let document = include_str!("../../../docs/origin-policy.md");
+        let example = document
+            .split("```json\n")
+            .nth(1)
+            .and_then(|block| block.split("```").next())
+            .unwrap();
+        let policy = OriginPolicy::from_unsigned_bytes(example.as_bytes()).unwrap();
+        let rhn = "https://rhn.example.internal";
+        for method in ["listPrinters", "printPdf"] {
+            policy
+                .authorize_plugin_invocation(rhn, "rhn.printing", method)
+                .unwrap();
+        }
+        assert!(policy
+            .authorize_plugin_invocation(rhn, "rhn.printing", "printRaw")
+            .is_err());
+        assert!(policy
+            .authorize_plugin_invocation("https://his.example.internal", "rhn.printing", "printPdf")
+            .is_err());
+    }
 }

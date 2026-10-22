@@ -1,4 +1,4 @@
-import { connectDesktop } from '@bsoft/ssdev-web-bridge'
+import { connectDesktop } from '@rhn/link-web-bridge'
 
 const { bridge } = await connectDesktop()
 

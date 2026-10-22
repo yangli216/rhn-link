@@ -9,7 +9,7 @@ import {
   parsePluginOperationId,
   requireTrackedPluginInvocations,
   settleTrackedInvocation,
-} from '@bsoft/ssdev-web-bridge'
+} from '@rhn/link-web-bridge'
 
 const connection = await connectDesktop()
 const bridge = requireTrackedPluginInvocations(

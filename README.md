@@ -172,6 +172,7 @@ apps/desktop/              Tauri 2 + Vue 3 桌面程序
 packages/web-bridge/       RHN Web 类型化桥接 SDK
 crates/webplus-*           原生协议、控制器、宿主与兼容层
 crates/ssdev-*             配置、签名、发布和交付工具
+plugins/                   RHN 一方签名插件清单（如 rhn.printing）
 examples/                  Windows 系统能力插件示例
 scripts/                   Windows 构建、验收和供应链门禁
 docs/                      架构、迁移、安全与交付文档
@@ -185,6 +186,8 @@ docs/                      架构、迁移、安全与交付文档
 | --- | --- |
 | 产品边界与迭代优先级 | [产品定位与迭代准则](docs/product-direction.md) |
 | RHN 前端接入 | [Web Bridge 迁移指南](docs/web-bridge-migration.md) |
+| RHN 登录、SDK 获取与部署 | [RHN 部署说明](docs/rhn-deployment.md) |
+| RHN 受控 PDF 打印 | [RHN 受控 PDF 打印](docs/rhn-printing.md) |
 | DLL/COM 可视化配置与调试 | [本地映射工作台](docs/local-mapping-studio.md) |
 | 插件开发、封包与黄金矩阵 | [插件发布流程](docs/plugin-release.md) |
 | 插件签名与运行时信任 | [插件签名与生命周期](docs/plugin-signing.md) |
@@ -196,7 +199,7 @@ docs/                      架构、迁移、安全与交付文档
 | 真实项目试点输入 | [试点材料预检](docs/pilot-readiness.md) |
 | 生产切换判定 | [Go/No-Go 证据](docs/cutover-evidence.md) |
 
-Windows API 插件的完整参考实现见 [`examples/windows-system-plugin`](examples/windows-system-plugin/README.md)。
+Windows API 插件的完整参考实现见 [`examples/windows-system-plugin`](examples/windows-system-plugin/README.md)。RHN 受控 PDF 打印插件见 [`plugins/rhn-printing`](plugins/rhn-printing/README.md)。
 
 ## 许可证
 

@@ -73,7 +73,7 @@ x86 与 x64 示例使用不同插件 ID，但声明同一个 `windows.system` �
 
 ## 4. 网页调用
 
-[`web-example.ts`](web-example.ts) 使用正式 `@bsoft/ssdev-web-bridge`，没有 localhost HTTP 回退：
+[`web-example.ts`](web-example.ts) 使用正式 `@rhn/link-web-bridge`，没有 localhost HTTP 回退：
 
 正式项目可直接从同一份映射生成完整类型化客户端，不需要手写路由：
 

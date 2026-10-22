@@ -17,8 +17,8 @@ import { fileURLToPath } from 'node:url'
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const packageDirectory = join(repositoryRoot, 'packages', 'web-bridge')
 const packageManifestPath = join(packageDirectory, 'package.json')
-const artifactManifestName = 'ssdev-web-bridge-sdk.json'
-const expectedPackageName = '@bsoft/ssdev-web-bridge'
+const artifactManifestName = 'rhn-link-web-bridge-sdk.json'
+const expectedPackageName = '@rhn/link-web-bridge'
 const maxArchiveBytes = 32 * 1024 * 1024
 const maxSourceInputBytes = 4 * 1024 * 1024
 const sourceFiles = Object.freeze([
@@ -153,7 +153,7 @@ async function smokeTestPackagedConsumer(archivePath) {
   const typescriptCompiler = join(packageDirectory, 'node_modules', 'typescript', 'bin', 'tsc')
   await regularFile(typescriptCompiler, maxSourceInputBytes, 'pinned TypeScript compiler')
 
-  const consumer = await mkdtemp(join(tmpdir(), 'ssdev-web-bridge-consumer-'))
+  const consumer = await mkdtemp(join(tmpdir(), 'rhn-link-web-bridge-consumer-'))
   try {
     await writeFile(
       join(consumer, 'package.json'),
@@ -184,7 +184,7 @@ async function smokeTestPackagedConsumer(archivePath) {
   parsePluginOperationId,
   parseTrackedInvocationStatus,
   settleTrackedInvocation,
-} from '@bsoft/ssdev-web-bridge'
+} from '@rhn/link-web-bridge'
 
 if (CURRENT_BRIDGE_PROTOCOL_VERSION !== 1) throw new Error('unexpected bridge protocol version')
 const restoredOperationId = parsePluginOperationId('123e4567-e89b-42d3-a456-426614174000')
@@ -266,7 +266,7 @@ if (response.ResCode !== 0 || response.ResData?.ready !== true) {
   parsePluginOperationId,
   parseTrackedInvocationStatus,
   settleTrackedInvocation,
-} from '@bsoft/ssdev-web-bridge'
+} from '@rhn/link-web-bridge'
 
 type Health = { ready: boolean }
 const fixture: PluginInvocationFixture<Health> = {
@@ -388,7 +388,7 @@ async function buildArtifactDirectory(output) {
   const identity = await readPackageIdentity()
   runNpm(['run', 'build'], { stdio: 'inherit' })
 
-  const temporary = await mkdtemp(join(dirname(output), '.ssdev-web-bridge-sdk-'))
+  const temporary = await mkdtemp(join(dirname(output), '.rhn-link-web-bridge-sdk-'))
   let completed = false
   try {
     const packed = runNpm(['pack', '--json', '--pack-destination', temporary])

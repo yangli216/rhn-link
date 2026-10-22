@@ -1,9 +1,11 @@
-# @bsoft/ssdev-web-bridge
+# @rhn/link-web-bridge
 
-业务前端使用的框架无关 SSDEV Desktop 桥接契约。该包只连接由受控 Tauri 业务窗口注入的 `window.ssdevDesktop`，不会尝试 localhost HTTP、WebSocket 或浏览器扩展回退。
+> 0.2.0 起包名由 `@bsoft/ssdev-web-bridge` 改为 `@rhn/link-web-bridge`，CI 制品与清单改为 `rhn-link-web-bridge-sdk`；导出 API、桥接协议和注入对象 `window.ssdevDesktop` 均未变化。升级时替换依赖名和全部 import，并重新生成插件 `client.ts`、`fixtures.ts` 与 Web 接入包。
+
+业务前端使用的框架无关 RHN Link 桥接契约。该包只连接由受控 Tauri 业务窗口注入的 `window.ssdevDesktop`，不会尝试 localhost HTTP、WebSocket 或浏览器扩展回退。
 
 ```ts
-import { connectDesktop } from '@bsoft/ssdev-web-bridge'
+import { connectDesktop } from '@rhn/link-web-bridge'
 
 const { bridge, system, context } = await connectDesktop()
 const result = await bridge.invokePlugin('card.reader', 'readCard', {
@@ -14,7 +16,7 @@ const result = await bridge.invokePlugin('card.reader', 'readCard', {
 业务前端单元测试不需要伪造完整桌面对象。生成的插件客户端只依赖最小 `PluginInvoker`，可以注入 SDK 提供的严格 fixture invoker：
 
 ```ts
-import { createPluginFixtureInvoker } from '@bsoft/ssdev-web-bridge'
+import { createPluginFixtureInvoker } from '@rhn/link-web-bridge'
 import { ReaderPluginClient } from './generated/reader-plugin-client'
 
 const invoker = createPluginFixtureInvoker([{
@@ -42,7 +44,7 @@ import {
   parsePluginOperationId,
   requireTrackedPluginInvocations,
   settleTrackedInvocation,
-} from '@bsoft/ssdev-web-bridge'
+} from '@rhn/link-web-bridge'
 import { createReaderPluginTrackedApi } from './generated/reader-plugin-client'
 
 const connection = await connectDesktop()
@@ -76,7 +78,7 @@ async function restoreReadCardOperation(restoredValue: unknown) {
 ```bash
 node scripts/web-integration-consumer.mjs verify \
   --kit vendor/reader-2.3.1-web-kit \
-  --sdk-directory artifacts/ssdev-web-bridge-sdk
+  --sdk-directory artifacts/rhn-link-web-bridge-sdk
 ```
 
 该命令先复核 Web kit 固定文件集、摘要和来源头，再复核 SDK `.tgz`、当前锁定源码摘要及其已有消费者冒烟证据；随后只使用已校验的内存快照，在临时业务项目中禁用生命周期脚本并离线安装 SDK，以严格 NodeNext 配置编译 `client.ts + fixtures.ts`，最后通过 SDK fixture invoker 实际覆盖生成客户端的每个公开方法和每条 fixture route。成功报告绑定插件版本、kit 清单摘要、SDK 版本、归档/源码摘要与覆盖计数，不返回本机路径。它证明这两份精确制品当前可以组合消费，但二者仍是未签名的前端交接物，不能替代受保护分支评审、插件签名或 Windows 硬件矩阵。
@@ -87,7 +89,7 @@ node scripts/web-integration-consumer.mjs verify \
 node scripts/web-integration-consumer.mjs verify-set \
   --kit vendor/reader-2.3.1-web-kit \
   --kit vendor/writer-1.4.0-web-kit \
-  --sdk-directory artifacts/ssdev-web-bridge-sdk
+  --sdk-directory artifacts/rhn-link-web-bridge-sdk
 ```
 
 联合门禁固定排序最多 64 个 kit，拒绝重复路径、ASCII 大小写归一后重复的插件 ID、超出总量边界以及跨插件重复 `serviceId/method`；全部源码在一个临时项目中用同一 SDK 编译，并由一个共享 fixture invoker 覆盖所有客户端。报告包含无路径的 kit 身份/版本/清单摘要列表及确定性集合摘要，可直接作为业务 CI 的精确依赖证据。
@@ -104,7 +106,7 @@ SDK 显式导出 `CURRENT_BRIDGE_PROTOCOL_VERSION`；旧名称 `CURRENT_PROTOCOL
 import {
   canRetryPluginInvocationWithBackoff,
   classifyPluginInvocationResponse,
-} from '@bsoft/ssdev-web-bridge'
+} from '@rhn/link-web-bridge'
 
 const response = await bridge.invokePlugin('card.reader', 'readCard', {})
 const disposition = classifyPluginInvocationResponse(response)
@@ -129,6 +131,6 @@ if (canRetryPluginInvocationWithBackoff(response)) {
 
 签名插件安装或热更新排空期间，只有发往目标插件的新请求返回 `{ ResCode: -32010, ResData: "native plugin controller is reloading; request was not executed" }`，其他插件继续服务；显式完整重新扫描时该错误可能覆盖全部插件。请求不会跨越一次路由/插件版本切换后再意外执行；业务页可以在维护结束后重新发起，但必须有退避上限，不能持续轮询压测客户端。
 
-尚未接入组织 npm 仓库时，主分支默认 CI 会上传保留 14 天的 `ssdev-web-bridge-sdk` 平台无关制品。目录固定只包含可安装 `.tgz` 和 `ssdev-web-bridge-sdk.json`，清单绑定包名、版本、大小、归档 SHA-256，以及 README、共享契约、锁文件、package manifest、TypeScript 源码和编译配置的有序联合摘要；Pull Request 只构建验证，不上传未合并制品。打包流程还会在临时业务项目中禁用生命周期脚本、强制离线安装刚生成的 `.tgz`，实际执行 ESM fixture 调用并用仓库锁定的 TypeScript 编译器检查公开类型，全部成功后才会原子发布目录，清单中的 `consumerSmokeVerified` 记录该次构建证据。业务项目应从目标提交对应的 Actions run 下载整个目录，核对清单后用 `.tgz` 安装，并把精确归档摘要纳入自己的依赖评审，不能只按仍处于开发期的 `0.1.0` 文件名判断内容。
+尚未接入组织 npm 仓库时，主分支默认 CI 会上传保留 14 天的 `rhn-link-web-bridge-sdk` 平台无关制品。目录固定只包含可安装 `.tgz` 和 `rhn-link-web-bridge-sdk.json`，清单绑定包名、版本、大小、归档 SHA-256，以及 README、共享契约、锁文件、package manifest、TypeScript 源码和编译配置的有序联合摘要；Pull Request 只构建验证，不上传未合并制品。打包流程还会在临时业务项目中禁用生命周期脚本、强制离线安装刚生成的 `.tgz`，实际执行 ESM fixture 调用并用仓库锁定的 TypeScript 编译器检查公开类型，全部成功后才会原子发布目录，清单中的 `consumerSmokeVerified` 记录该次构建证据。业务项目应从目标提交对应的 Actions run 下载整个目录，核对清单后用 `.tgz` 安装，并把精确归档摘要纳入自己的依赖评审，不能只按仍处于开发期的 `0.2.0` 文件名判断内容。
 
 本地或受控流水线可运行 `node scripts/web-bridge-package.mjs build --output <新目录>`；业务接收前用 `verify --directory <目录>` 重算固定文件集、归档和当前锁定源码摘要。构建器先执行 TypeScript 编译，使用 `npm pack` 生成可重复归档，在同一临时目录完成自检后才原子发布目标目录。SDK 回归仍会执行 `npm pack --dry-run`，固定包内只能包含 README、共享契约、编译后的 ESM/类型声明和 package manifest，不得夹带源码、测试或 `node_modules`。该 CI 制品没有组织签名，不是正式 npm 发布；发布到组织内部 npm 仓库前再由批准的版本治理变更移除 `private` 并接入组织签名，当前仓库保持 `private: true`，避免误发公共 registry。

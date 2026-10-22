@@ -1,9 +1,9 @@
 # WebPlus 调用迁移
 
-Tauri 内部不再通过 `http://127.0.0.1:7711` 调用客户端原生能力。新业务代码建议通过 `@bsoft/ssdev-web-bridge` 接入，以便统一检查协议版本并获得稳定类型：
+Tauri 内部不再通过 `http://127.0.0.1:7711` 调用客户端原生能力。新业务代码建议通过 `@rhn/link-web-bridge` 接入，以便统一检查协议版本并获得稳定类型：
 
 ```ts
-import { connectDesktop } from '@bsoft/ssdev-web-bridge'
+import { connectDesktop } from '@rhn/link-web-bridge'
 
 const { bridge, system, context } = await connectDesktop()
 const result = await bridge.invokePlugin("card.reader", "readCard", { timeout: 30 })
@@ -111,7 +111,7 @@ controller 对所有入口统一限制最多 8 个在途插件调用，不建立
 
 该响应在服务路由和插件宿主执行之前产生，因此本次请求保证没有执行。调用方只能对这个精确错误做有上限的退避重试；不要对超时或其他插件错误自动重试，以免非幂等硬件操作被重复执行。
 
-业务前端应优先使用 `@bsoft/ssdev-web-bridge` 的 `classifyPluginInvocationResponse()`、`wasPluginInvocationGuaranteedNotExecuted()` 和 `canRetryPluginInvocationWithBackoff()`，不要自行复制状态码集合。分类器只把与 Rust controller 共享契约的四个拒绝码标为“保证未执行”，且不会替业务发起重试；controller 会把宿主或厂商组件返回的同码改写成一般宿主失败，防止已经执行的原生响应伪装成安全拒绝。其他响应一律不提供自动重试依据。
+业务前端应优先使用 `@rhn/link-web-bridge` 的 `classifyPluginInvocationResponse()`、`wasPluginInvocationGuaranteedNotExecuted()` 和 `canRetryPluginInvocationWithBackoff()`，不要自行复制状态码集合。分类器只把与 Rust controller 共享契约的四个拒绝码标为“保证未执行”，且不会替业务发起重试；controller 会把宿主或厂商组件返回的同码改写成一般宿主失败，防止已经执行的原生响应伪装成安全拒绝。其他响应一律不提供自动重试依据。
 
 调用一旦通过准入，就由 Rust controller 的独立监督任务持有。页面导航、WebView 销毁或 JavaScript 丢弃 Promise 只会脱离结果等待，不会取消已经开始的 DLL/COM/设备操作；监督任务仍执行到响应或受控超时，确保后续管道响应不会错配。业务端必须把这类结果未知的调用视为“可能已经执行”，不能自动重试。真正的设备取消只能在具体插件协议明确支持、且另行定义幂等与确认语义后增加。
 
